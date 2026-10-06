@@ -2,43 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
   >
-
-  <title>Hand Blocks</title>
-
-  <link rel="stylesheet" href="Style.css">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <title>AR Tetris Portal</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-  <video id="camera" autoplay playsinline></video>
-
+  <!-- CAMERA -->
+  <video
+    id="camera"
+    autoplay
+    playsinline
+    muted
+  ></video>
+  <!-- 3D GAME -->
   <canvas id="game"></canvas>
-
-  <div id="loading">
-    <div>STARTING HAND TRACKING...</div>
+  <!-- START SCREEN -->
+  <div id="startScreen">
+    <h1>AR TETRIS</h1>
+    <p id="message">
+      Tap below to start the camera
+    </p>
+    <button id="startButton">
+      START AR
+    </button>
   </div>
-
-  <div id="message">
-    <h1>HAND BLOCKS</h1>
-    <p>Move your hand in front of the camera</p>
-    <p>Pinch your fingers to grab a block</p>
+  <!-- GAME UI -->
+  <div id="hud">
+    <div id="title">
+      AR TETRIS
+    </div>
+    <div id="score">
+      SCORE: 0
+    </div>
+    <div id="hint">
+      Swipe ← → to move<br>
+      Tap to rotate
+    </div>
   </div>
-
-  <div id="error"></div>
-
-  <script src="Game.js"></script>
-
+  <!-- THREE.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GAME -->
+  <script src="game.js"></script>
 </body>
 </html>

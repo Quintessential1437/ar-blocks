@@ -1,123 +1,105 @@
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
-
 html,
 body {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: black;
   font-family: Arial, sans-serif;
 }
-
-body {
-  position: relative;
-}
-
+/* CAMERA */
 #camera {
   position: fixed;
   inset: 0;
-
   width: 100%;
   height: 100%;
-
   object-fit: cover;
-
-  transform: scaleX(-1);
-
   z-index: 0;
+  background: black;
 }
-
+/* THREE.JS */
 #game {
   position: fixed;
   inset: 0;
-
   width: 100%;
   height: 100%;
-
   z-index: 1;
-
   pointer-events: none;
 }
-
-#message {
+/* START SCREEN */
+#startScreen {
   position: fixed;
-
-  top: 25px;
-  left: 50%;
-
-  transform: translateX(-50%);
-
-  width: 90%;
-
-  text-align: center;
-
-  color: white;
-
-  z-index: 10;
-
-  pointer-events: none;
-
-  text-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.8);
-}
-
-#message h1 {
-  font-size: 28px;
-  letter-spacing: 4px;
-  margin-bottom: 8px;
-}
-
-#message p {
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-#loading {
-  position: fixed;
-
   inset: 0;
-
+  z-index: 10;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-
-  background: #000;
-
-  color: white;
-
-  font-size: 18px;
-  letter-spacing: 2px;
-
-  z-index: 100;
-
+  align-items: center;
   text-align: center;
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
 }
-
-#error {
-  position: fixed;
-
-  left: 50%;
-  bottom: 30px;
-
-  transform: translateX(-50%);
-
-  width: 90%;
-
-  padding: 15px;
-
-  background: rgba(180, 0, 0, 0.9);
-
+#startScreen h1 {
+  font-size: 42px;
+  margin: 0 0 15px;
+  letter-spacing: 4px;
+}
+#message {
+  font-size: 16px;
+  max-width: 300px;
+  line-height: 1.5;
+  opacity: 0.85;
+  margin-bottom: 30px;
+}
+#startButton {
+  border: 0;
+  border-radius: 50px;
+  padding: 18px 40px;
+  font-size: 18px;
+  font-weight: bold;
   color: white;
-
-  border-radius: 10px;
-
+  background: #00e5ff;
+  cursor: pointer;
+  box-shadow:
+    0 0 20px rgba(0, 229, 255, 0.5);
+  touch-action: manipulation;
+}
+#startButton:active {
+  transform: scale(0.95);
+}
+/* HUD */
+#hud {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 5;
+  pointer-events: none;
+  color: white;
+  text-shadow:
+    0 2px 5px black;
+}
+#title {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+#score {
+  margin-top: 8px;
+  font-size: 15px;
+}
+#hint {
+  position: fixed;
+  bottom: 25px;
+  left: 0;
+  right: 0;
   text-align: center;
-
-  z-index: 200;
-
-  display: none;
+  font-size: 13px;
+  opacity: 0.75;
 }

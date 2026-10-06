@@ -1,0 +1,104 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Arial, sans-serif;
+}
+
+body {
+  position: relative;
+}
+
+#handVideo {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+canvas {
+  position: fixed !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1;
+  touch-action: none;
+}
+
+#hud {
+  position: fixed;
+  z-index: 5;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 18px;
+  pointer-events: none;
+  color: white;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .22em;
+}
+
+#status {
+  margin-top: 5px;
+  font-size: 13px;
+  opacity: .72;
+}
+
+#spawn {
+  pointer-events: auto;
+  position: fixed;
+  right: 18px;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  background: rgba(255,255,255,.94);
+  color: #080808;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+
+#hint {
+  position: fixed;
+  z-index: 5;
+  left: 50%;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  color: white;
+  text-align: center;
+  font-size: 13px;
+  opacity: .78;
+  pointer-events: none;
+  transition: opacity .4s ease;
+}
+
+.hand-icon {
+  font-size: 34px;
+  margin-bottom: 4px;
+}
+
+#error {
+  position: fixed;
+  z-index: 20;
+  left: 16px;
+  right: 16px;
+  bottom: 90px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(120, 0, 0, .88);
+  color: white;
+  font-size: 13px;
+  line-height: 1.45;
+}

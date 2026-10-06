@@ -1,28 +1,44 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>BLOCKS — Hand Tracking Test</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>Hand Blocks</title>
+
+  <link rel="stylesheet" href="Style.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 </head>
+
 <body>
-  <video id="camera" playsinline muted></video>
-  <canvas id="scene"></canvas>
-  <div id="hud">
-    <header><strong>BLOCKS</strong><span id="status">Tap Start</span></header>
-    <p id="hint">Allow camera access, then pinch a block to grab it.</p>
-    <div class="controls">
-      <button id="start">START CAMERA</button>
-      <button id="add" disabled>＋ BLOCK</button>
-    </div>
-    <div id="error" role="status"></div>
+
+  <video id="camera" autoplay playsinline></video>
+
+  <canvas id="game"></canvas>
+
+  <div id="loading">
+    <div>STARTING HAND TRACKING...</div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="game.js"></script>
+  <div id="message">
+    <h1>HAND BLOCKS</h1>
+    <p>Move your hand in front of the camera</p>
+    <p>Pinch your fingers to grab a block</p>
+  </div>
+
+  <div id="error"></div>
+
+  <script src="Game.js"></script>
+
 </body>
 </html>

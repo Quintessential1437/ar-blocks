@@ -1,202 +1,519 @@
-(() => {
-  const video = document.getElementById("camera");
-  const canvas = document.getElementById("scene");
-  const statusEl = document.getElementById("status");
-  const errorEl = document.getElementById("error");
-  const startBtn = document.getElementById("start");
-  const addBtn = document.getElementById("add");
+// ==========================================
+// HAND BLOCKS
+// ==========================================
 
-  let renderer, scene, camera, handModel, cameraHelper;
-  let blocks = [];
-  let pinchWasDown = false;
-  let heldBlock = null;
-  let handPoint = new THREE.Vector2(0, 0);
-  let handVisible = false;
-  let processing = false;
+const video = document.getElementById("camera");
+const canvas = document.getElementById("game");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
 
-  function showError(message) {
-    errorEl.textContent = message;
-    errorEl.style.display = "block";
-    statusEl.textContent = "Needs attention";
-  }
 
-  function initScene() {
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputEncoding = THREE.sRGBEncoding;
+// ==========================================
+// THREE.JS
+// ==========================================
 
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 7);
+const scene = new THREE.Scene();
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x26304a, 1.8));
-    const key = new THREE.DirectionalLight(0xffffff, 2.3);
-    key.position.set(-3, 5, 8);
-    scene.add(key);
+const camera = new THREE.PerspectiveCamera(
+  70,
+  window.innerWidth / window.innerHeight,
+  0.01,
+  100
+);
 
-    // Camera-facing play space: this V2 isolates camera + hand tracking first.
-    addBlock(0, 0, 0);
-    addBlock(-1.05, -0.15, -0.25);
-    addBlock(1.05, -0.15, -0.25);
-    window.addEventListener("resize", resize);
-    animate();
-  }
+camera.position.set(0, 0, 6);
 
-  function makeBlockMaterial(color) {
-    return new THREE.MeshStandardMaterial({
-      color, roughness: 0.28, metalness: 0.08,
-      emissive: color, emissiveIntensity: 0.08
-    });
-  }
 
-  function addBlock(x, y, z) {
-    const geometry = new THREE.BoxGeometry(0.88, 0.88, 0.88);
-    const mesh = new THREE.Mesh(geometry, makeBlockMaterial([0x36d7ff,0xffb84d,0xb68cff,0x55e6a5,0xff6e91][blocks.length % 5]));
-    mesh.position.set(x, y, z);
-    mesh.userData.homeZ = z;
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
-    );
-    mesh.add(edges);
-    scene.add(mesh);
-    blocks.push(mesh);
-    return mesh;
-  }
+const renderer = new THREE.WebGLRenderer({
+  canvas: canvas,
+  alpha: true,
+  antialias: true
+});
 
-  function resize() {
-    if (!renderer || !camera) return;
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  }
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
 
-  function getScreenWorld(x, y) {
-    const ndc = new THREE.Vector3(x * 2 - 1, 1 - y * 2, 0.5);
-    ndc.unproject(camera);
-    const dir = ndc.sub(camera.position).normalize();
-    const distance = (0 - camera.position.z) / dir.z;
-    return camera.position.clone().add(dir.multiplyScalar(distance));
-  }
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
 
-  function processHands(results) {
-    if (!results.multiHandLandmarks || !results.multiHandLandmarks.length) {
-      handVisible = false;
-      heldBlock = null;
-      pinchWasDown = false;
-      statusEl.textContent = "Show your hand";
-      return;
-    }
 
-    const lm = results.multiHandLandmarks[0];
-    const index = lm[8], thumb = lm[4];
-    // Mirror X to match the mirrored front-camera preview.
-    const x = 1 - (index.x + thumb.x) * 0.5;
-    const y = (index.y + thumb.y) * 0.5;
-    handPoint.set(x, y);
-    handVisible = true;
-    const pinchDistance = Math.hypot(index.x - thumb.x, index.y - thumb.y);
-    const pinching = pinchDistance < 0.075;
-    const world = getScreenWorld(x, y);
+// ==========================================
+// LIGHTING
+// ==========================================
 
-    if (pinching && !pinchWasDown) {
-      let nearest = null, nearestDistance = Infinity;
-      for (const block of blocks) {
-        const d = block.position.distanceTo(world);
-        if (d < nearestDistance) { nearestDistance = d; nearest = block; }
-      }
-      heldBlock = nearestDistance < 1.2 ? nearest : null;
-    }
+const ambientLight = new THREE.AmbientLight(
+  0xffffff,
+  1.8
+);
 
-    if (pinching && heldBlock) {
-      heldBlock.position.x += (world.x - heldBlock.position.x) * 0.45;
-      heldBlock.position.y += (world.y - heldBlock.position.y) * 0.45;
-      heldBlock.position.z += (world.z - heldBlock.position.z) * 0.45;
-      statusEl.textContent = "Pinch to move";
-    } else if (!pinching) {
-      heldBlock = null;
-      statusEl.textContent = "Hand detected";
-    }
-    pinchWasDown = pinching;
-  }
+scene.add(ambientLight);
 
-  async function start() {
-    errorEl.style.display = "none";
-    startBtn.disabled = true;
-    statusEl.textContent = "Starting camera…";
-    try {
-      if (!window.isSecureContext) {
-        throw new Error("This page is not in a secure context. Open the https:// GitHub Pages address, not a preview or http:// link.");
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("This browser does not expose camera access. Open the site in Safari and check camera permissions.");
-      }
 
-      // Request one camera stream and reuse it for both the visible preview and MediaPipe.
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      video.srcObject = stream;
-      await video.play();
+const directionalLight = new THREE.DirectionalLight(
+  0xffffff,
+  2
+);
 
-      const hands = new Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-      });
-      hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.55
-      });
-      hands.onResults(processHands);
+directionalLight.position.set(
+  2,
+  4,
+  5
+);
 
-      // MediaPipe's Camera helper only schedules frames; it uses the existing video stream.
-      cameraHelper = new Camera(video, {
-        onFrame: async () => {
-          if (processing) return;
-          processing = true;
-          try { await hands.send({ image: video }); }
-          catch (err) { console.error(err); }
-          processing = false;
-        },
-        width: 1280,
-        height: 720
-      });
-      await cameraHelper.start();
+scene.add(directionalLight);
 
-      startBtn.textContent = "CAMERA RUNNING";
-      addBtn.disabled = false;
-      statusEl.textContent = "Show your hand";
-      document.getElementById("hint").textContent = "Pinch your thumb and index finger near a block, then move your hand.";
-    } catch (err) {
-      console.error(err);
-      startBtn.disabled = false;
-      showError(err && err.message ? err.message : "Camera or hand tracking could not start. Check camera permissions and reload.");
-    }
-  }
 
-  function animate() {
-    requestAnimationFrame(animate);
-    if (!renderer) return;
-    const t = performance.now() * 0.001;
-    blocks.forEach((b, i) => {
-      if (b !== heldBlock) {
-        b.rotation.y = Math.sin(t * 0.45 + i) * 0.035;
-        b.rotation.x = Math.cos(t * 0.35 + i) * 0.025;
-      }
-    });
-    renderer.render(scene, camera);
-  }
+// ==========================================
+// BLOCKS
+// ==========================================
 
-  startBtn.addEventListener("click", start);
-  addBtn.addEventListener("click", () => {
-    if (!scene) return;
-    const x = (Math.random() - 0.5) * 2.2;
-    const y = (Math.random() - 0.5) * 1.4;
-    addBlock(x, y, -0.2);
+const blocks = [];
+
+const blockColors = [
+  0x00e5ff,
+  0xff2bd6,
+  0xff9d00,
+  0x5cff5c,
+  0x8a5cff,
+  0xffff33
+];
+
+
+function createBlock(x, y, z, size, color) {
+
+  const geometry = new THREE.BoxGeometry(
+    size,
+    size,
+    size
+  );
+
+  const material = new THREE.MeshStandardMaterial({
+    color: color,
+    roughness: 0.25,
+    metalness: 0.2
   });
 
-  initScene();
-})();
+  const cube = new THREE.Mesh(
+    geometry,
+    material
+  );
+
+  cube.position.set(
+    x,
+    y,
+    z
+  );
+
+  scene.add(cube);
+
+  blocks.push(cube);
+
+  return cube;
+}
+
+
+// ==========================================
+// CREATE BLOCK FIELD
+// ==========================================
+
+createBlock(-1.3, 1.1, 0, 0.65, blockColors[0]);
+createBlock(0, 1.1, 0, 0.65, blockColors[1]);
+createBlock(1.3, 1.1, 0, 0.65, blockColors[2]);
+
+createBlock(-1.3, 0, 0, 0.65, blockColors[3]);
+createBlock(0, 0, 0, 0.65, blockColors[4]);
+createBlock(1.3, 0, 0, 0.65, blockColors[5]);
+
+createBlock(-1.3, -1.1, 0, 0.65, blockColors[5]);
+createBlock(0, -1.1, 0, 0.65, blockColors[0]);
+createBlock(1.3, -1.1, 0, 0.65, blockColors[1]);
+
+
+// ==========================================
+// FLOOR
+// ==========================================
+
+const floorGeometry =
+  new THREE.PlaneGeometry(10, 10);
+
+const floorMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    transparent: true,
+    opacity: 0.18
+  });
+
+const floor =
+  new THREE.Mesh(
+    floorGeometry,
+    floorMaterial
+  );
+
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -2;
+
+scene.add(floor);
+
+
+// ==========================================
+// HAND TRACKING
+// ==========================================
+
+let handX = 0;
+let handY = 0;
+
+let pinch = false;
+
+let grabbedBlock = null;
+
+let previousHandX = 0;
+let previousHandY = 0;
+
+
+function distance(a, b) {
+
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+
+  return Math.sqrt(
+    dx * dx +
+    dy * dy
+  );
+}
+
+
+function processHands(results) {
+
+  if (
+    !results.multiHandLandmarks ||
+    results.multiHandLandmarks.length === 0
+  ) {
+
+    grabbedBlock = null;
+
+    return;
+  }
+
+
+  const hand =
+    results.multiHandLandmarks[0];
+
+
+  // INDEX FINGER
+  const index =
+    hand[8];
+
+  // THUMB
+  const thumb =
+    hand[4];
+
+
+  // Convert camera coordinates
+  // into game coordinates
+
+  handX =
+    (1 - index.x) * 2 - 1;
+
+  handY =
+    -(index.y * 2 - 1);
+
+
+  // Distance between thumb
+  // and index finger
+
+  const pinchDistance =
+    distance(index, thumb);
+
+
+  pinch =
+    pinchDistance < 0.07;
+
+
+  // ========================================
+  // GRAB
+  // ========================================
+
+  if (pinch && !grabbedBlock) {
+
+    let closest = null;
+
+    let closestDistance = Infinity;
+
+
+    for (const block of blocks) {
+
+      const dx =
+        block.position.x -
+        handX * 3;
+
+      const dy =
+        block.position.y -
+        handY * 3;
+
+
+      const d =
+        Math.sqrt(
+          dx * dx +
+          dy * dy
+        );
+
+
+      if (d < closestDistance) {
+
+        closestDistance = d;
+
+        closest = block;
+      }
+    }
+
+
+    if (
+      closest &&
+      closestDistance < 1.4
+    ) {
+
+      grabbedBlock = closest;
+
+      grabbedBlock.userData.grabbed = true;
+    }
+  }
+
+
+  // ========================================
+  // MOVE GRABBED BLOCK
+  // ========================================
+
+  if (
+    pinch &&
+    grabbedBlock
+  ) {
+
+    const targetX =
+      handX * 3;
+
+    const targetY =
+      handY * 3;
+
+
+    grabbedBlock.position.x +=
+      (targetX -
+       grabbedBlock.position.x) * 0.25;
+
+
+    grabbedBlock.position.y +=
+      (targetY -
+       grabbedBlock.position.y) * 0.25;
+
+
+    grabbedBlock.rotation.x += 0.02;
+
+    grabbedBlock.rotation.y += 0.025;
+  }
+
+
+  // ========================================
+  // RELEASE
+  // ========================================
+
+  if (
+    !pinch &&
+    grabbedBlock
+  ) {
+
+    grabbedBlock.userData.grabbed = false;
+
+    grabbedBlock = null;
+  }
+
+
+  previousHandX = handX;
+  previousHandY = handY;
+}
+
+
+// ==========================================
+// MEDIAPIPE
+// ==========================================
+
+const hands =
+  new Hands({
+    locateFile: function(file) {
+
+      return (
+        "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" +
+        file
+      );
+
+    }
+  });
+
+
+hands.setOptions({
+
+  maxNumHands: 1,
+
+  modelComplexity: 1,
+
+  minDetectionConfidence: 0.6,
+
+  minTrackingConfidence: 0.6
+
+});
+
+
+hands.onResults(
+  processHands
+);
+
+
+// ==========================================
+// CAMERA
+// ==========================================
+
+async function startCamera() {
+
+  try {
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+          facingMode: "user",
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+        },
+
+        audio: false
+
+      });
+
+
+    video.srcObject =
+      stream;
+
+
+    await video.play();
+
+
+    const cameraController =
+      new Camera(video, {
+
+        onFrame: async function() {
+
+          await hands.send({
+            image: video
+          });
+
+        },
+
+        width: 1280,
+
+        height: 720
+
+      });
+
+
+    cameraController.start();
+
+
+    loading.style.display =
+      "none";
+
+  }
+
+  catch (err) {
+
+    console.error(err);
+
+
+    loading.style.display =
+      "none";
+
+
+    errorBox.style.display =
+      "block";
+
+
+    errorBox.innerHTML =
+      "Camera could not start.<br><br>" +
+      "Make sure you opened this website using HTTPS " +
+      "and allowed camera access.";
+
+  }
+}
+
+
+// ==========================================
+// RESIZE
+// ==========================================
+
+window.addEventListener(
+  "resize",
+  function() {
+
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+  }
+);
+
+
+// ==========================================
+// ANIMATION
+// ==========================================
+
+function animate() {
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  for (const block of blocks) {
+
+    if (
+      block !== grabbedBlock
+    ) {
+
+      block.rotation.x +=
+        0.002;
+
+      block.rotation.y +=
+        0.003;
+    }
+  }
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
+
+animate();
+
+
+// ==========================================
+// START
+// ==========================================
+
+startCamera();

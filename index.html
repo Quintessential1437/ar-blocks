@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>BLOCKS — Hand Tracking Test</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <video id="camera" playsinline muted></video>
+  <canvas id="scene"></canvas>
+  <div id="hud">
+    <header><strong>BLOCKS</strong><span id="status">Tap Start</span></header>
+    <p id="hint">Allow camera access, then pinch a block to grab it.</p>
+    <div class="controls">
+      <button id="start">START CAMERA</button>
+      <button id="add" disabled>＋ BLOCK</button>
+    </div>
+    <div id="error" role="status"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
